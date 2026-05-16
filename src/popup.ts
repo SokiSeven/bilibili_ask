@@ -31,16 +31,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (tab?.url?.includes('bilibili.com/video/')) {
     pageStatus.textContent = '视频页'
     pageDot.className = 'status-pill__dot status-pill__dot--on'
-    pageUrl.textContent = tab.title?.slice(0, 30) || 'B站视频'
+    pageUrl.textContent = tab.title?.slice(0, 30) || 'bilibili'
   } else if (tab?.url?.includes('bilibili.com')) {
-    pageStatus.textContent = 'B站其他'
+    pageStatus.textContent = 'bilibili其他'
     pageDot.className = 'status-pill__dot status-pill__dot--warn'
     pageUrl.textContent = '非视频详情页'
     pageUrl.className = 'main-card__val main-card__val--warn'
   } else {
-    pageStatus.textContent = '非B站'
+    pageStatus.textContent = '非bilibili'
     pageDot.className = 'status-pill__dot status-pill__dot--off'
-    pageUrl.textContent = '请在B站使用'
+    pageUrl.textContent = '请在bilibili使用'
     pageUrl.className = 'main-card__val main-card__val--warn'
   }
 

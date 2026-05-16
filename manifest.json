@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "bilibili_ask",
   "version": "1.0.0",
-  "description": "基于B站视频字幕内容的AI问答助手，支持OpenAI兼容API",
+  "description": "bilibili_ask - AI Q&A based on video subtitles, OpenAI-compatible API",
   "permissions": [
     "storage",
     "activeTab"

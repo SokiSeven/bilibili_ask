@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   baseURL: 'https://api.openai.com',
   apiKey: '',
   model: 'gpt-4o',
-  systemPrompt: `你是一个B站视频助手，根据提供的视频信息（标题、简介、字幕）回答用户的问题。
+  systemPrompt: `你是一个bilibili_ask助手，根据提供的视频信息（标题、简介、字幕）回答用户的问题。
 规则：
 1. 根据提供的字幕内容回答，不要编造信息
 2. 如果字幕中没有相关信息，诚实告知用户

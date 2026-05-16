@@ -373,7 +373,7 @@ export class ChatPanel {
           <svg viewBox="0 0 24 24"><path d="M21.6 10.3L7.5 1.2C6.7.7 5.7.7 4.9 1.2c-.8.5-1.3 1.4-1.3 2.3v16.9c0 .9.5 1.8 1.3 2.3.4.2.8.4 1.3.4.4 0 .9-.1 1.3-.4l14.1-9.1c.7-.5 1.2-1.3 1.2-2.1s-.5-1.6-1.2-2.2z"/></svg>
         </div>
         <div class="${PANEL_ID}__meta">
-          <div class="${PANEL_ID}__title">视频助手</div>
+          <div class="${PANEL_ID}__title">bilibili_ask</div>
         </div>
         <button class="${PANEL_ID}__btn" data-action="clear" title="清空">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
@@ -384,7 +384,7 @@ export class ChatPanel {
       </div>
       <div class="${PANEL_ID}__messages">
         <div class="${PANEL_ID}__msg ${PANEL_ID}__msg--system">
-          你好，我是视频助手。试试问我当前视频讲了什么吧
+          你好，我是bilibili_ask。试试问我当前视频讲了什么吧
         </div>
       </div>
       <div class="${PANEL_ID}__input-wrap">
@@ -597,7 +597,7 @@ export interface FloatButton {
 export function createFloatingButton(): FloatButton {
   const btn = document.createElement('button')
   btn.id = BTN_ID
-  btn.title = '视频助手 · 可拖拽'
+  btn.title = 'bilibili_ask'
   btn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>`
 
   // Restore saved position or default
