@@ -12,30 +12,34 @@ export function injectStyles(): void {
 /* === FLOATING BUTTON === */
 #${BTN_ID} {
   position: fixed;
-  bottom: 100px;
   right: 24px;
   width: 48px;
   height: 48px;
   border-radius: 14px;
   background: #fff;
   border: none;
-  cursor: pointer;
+  cursor: grab;
   z-index: 99998;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 12px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
-  transition: border-radius .25s, box-shadow .25s, transform .25s;
+  transition: border-radius .25s, box-shadow .25s;
   padding: 0;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
 }
 #${BTN_ID}:hover {
   border-radius: 18px;
   box-shadow: 0 4px 20px rgba(0,0,0,.12), 0 0 0 1px rgba(251,114,153,.2);
-  transform: translateY(-2px);
 }
-#${BTN_ID}:active {
-  transform: scale(.94);
+#${BTN_ID}.bili-ask-dragging {
+  cursor: grabbing;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.18), 0 0 0 1px rgba(251,114,153,.25);
+  transition: none;
+  opacity: .92;
 }
 #${BTN_ID} svg {
   width: 22px;
@@ -45,12 +49,12 @@ export function injectStyles(): void {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+  pointer-events: none;
 }
 
 /* === CHAT PANEL === */
 #${PANEL_ID} {
   position: fixed;
-  bottom: 90px;
   right: 24px;
   width: 400px;
   height: 540px;
@@ -434,8 +438,37 @@ export class ChatPanel {
     this.container.classList.add(`${PANEL_ID}--hidden`)
   }
 
+  get visible(): boolean {
+    return !this.container.classList.contains(`${PANEL_ID}--hidden`)
+  }
+
   toggle(): void {
     this.container.classList.contains(`${PANEL_ID}--hidden`) ? this.show() : this.hide()
+  }
+
+  /** Position the panel above the button's current top edge */
+  syncToButton(btnTop: number): void {
+    const panelHeight = this.container.offsetHeight
+    const viewHeight = window.innerHeight
+    const spaceBelow = viewHeight - btnTop - 48 // 48 = button height
+    const spaceAbove = btnTop
+
+    if (spaceBelow >= panelHeight + 12) {
+      // open below button
+      this.container.style.top = `${btnTop + 48 + 12}px`
+      this.container.style.bottom = 'auto'
+      this.container.style.transformOrigin = 'top right'
+    } else if (spaceAbove >= panelHeight + 12) {
+      // open above button
+      this.container.style.bottom = `${viewHeight - btnTop + 12}px`
+      this.container.style.top = 'auto'
+      this.container.style.transformOrigin = 'bottom right'
+    } else {
+      // not enough space either side — center vertically
+      this.container.style.top = `${(viewHeight - panelHeight) / 2}px`
+      this.container.style.bottom = 'auto'
+      this.container.style.transformOrigin = 'center right'
+    }
   }
 
   addUserMessage(text: string): void {
@@ -500,14 +533,118 @@ export class ChatPanel {
   }
 }
 
-// --------------- Floating button ---------------
-export function createFloatingButton(): HTMLElement {
+// --------------- Floating button (draggable) ---------------
+
+const STORAGE_KEY_TOP = 'bili_ask_btn_top'
+const BTN_DEFAULT_GAP = 100 // px from bottom
+const DRAG_THRESHOLD = 5    // px moved before it counts as a drag
+
+export interface FloatButton {
+  el: HTMLElement
+  getTop: () => number
+  onDrag: (cb: (top: number) => void) => void
+}
+
+export function createFloatingButton(): FloatButton {
   const btn = document.createElement('button')
   btn.id = BTN_ID
-  btn.title = '视频助手'
+  btn.title = '视频助手 · 可拖拽'
   btn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>`
+
+  // Restore saved position or default
+  const saved = readSavedTop()
+  btn.style.top = saved !== null ? `${saved}px` : `calc(100vh - ${BTN_DEFAULT_GAP + 48}px)`
+
   document.body.appendChild(btn)
-  return btn
+
+  // --- drag state ---
+  let dragging = false
+  let startY = 0
+  let startTop = 0
+  let moved = false
+  const dragCallbacks: Array<(top: number) => void> = []
+
+  function clamp(v: number, min: number, max: number) {
+    return Math.min(Math.max(v, min), max)
+  }
+
+  function getClampedTop(raw: number): number {
+    return clamp(raw, 8, window.innerHeight - 56)
+  }
+
+  function onStart(e: MouseEvent | TouchEvent): void {
+    // Only respond to primary button / first touch
+    if (e instanceof MouseEvent && e.button !== 0) return
+
+    dragging = true
+    moved = false
+    startY = e instanceof MouseEvent ? e.clientY : e.touches[0].clientY
+    startTop = btn.getBoundingClientRect().top
+    btn.classList.add('bili-ask-dragging')
+    e.preventDefault()
+  }
+
+  function onMove(e: MouseEvent | TouchEvent): void {
+    if (!dragging) return
+    const clientY = e instanceof MouseEvent ? e.clientY : e.touches[0].clientY
+    const delta = clientY - startY
+    if (Math.abs(delta) > DRAG_THRESHOLD) {
+      moved = true
+    }
+    if (moved) {
+      const newTop = getClampedTop(startTop + delta)
+      btn.style.top = `${newTop}px`
+      for (const cb of dragCallbacks) cb(newTop)
+    }
+  }
+
+  function onEnd(): void {
+    if (!dragging) return
+    dragging = false
+    btn.classList.remove('bili-ask-dragging')
+    if (moved) {
+      const top = btn.getBoundingClientRect().top
+      saveTop(top)
+    }
+  }
+
+  btn.addEventListener('mousedown', onStart)
+  btn.addEventListener('touchstart', onStart, { passive: false })
+  window.addEventListener('mousemove', onMove)
+  window.addEventListener('touchmove', onMove, { passive: false })
+  window.addEventListener('mouseup', onEnd)
+  window.addEventListener('touchend', onEnd)
+
+  // Reset position on double-click
+  btn.addEventListener('dblclick', () => {
+    clearSavedTop()
+    btn.style.top = `calc(100vh - ${BTN_DEFAULT_GAP + 48}px)`
+    const top = btn.getBoundingClientRect().top
+    for (const cb of dragCallbacks) cb(top)
+  })
+
+  return {
+    el: btn,
+    getTop: () => btn.getBoundingClientRect().top,
+    onDrag: (cb) => { dragCallbacks.push(cb) },
+  }
+}
+
+function readSavedTop(): number | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_TOP)
+    if (raw === null) return null
+    const v = parseFloat(raw)
+    return Number.isFinite(v) ? v : null
+  } catch { return null }
+}
+
+function saveTop(top: number): void {
+  try { localStorage.setItem(STORAGE_KEY_TOP, String(Math.round(top))) } catch { /* noop */ }
+}
+
+function clearSavedTop(): void {
+  try { localStorage.removeItem(STORAGE_KEY_TOP) } catch { /* noop */ }
 }
 
 // --------------- Tiny markdown renderer ---------------

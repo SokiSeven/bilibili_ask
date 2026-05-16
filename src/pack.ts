@@ -1,43 +1,69 @@
-// get aid bvid cid from window_initial_state
+// get aid bvid cid from window.__INITIAL_STATE__
 function getBilibiliVideoMeta() {
-  const state = (window as any).__INITIAL_STATE__ // __INITIAL_STATE__是b站页面自定义注入的全局变量
+  const state = (window as any).__INITIAL_STATE__
   if (!state?.videoData) {
+    console.error('[BiliAsk:MAIN] __INITIAL_STATE__.videoData not found — not a B站 video page?')
     return null
   }
   return {
-    "aid": state.videoData.aid,
-    "bvid": state.videoData.bvid,
-    "cid": state.videoData.cid,
-    "title": state.videoData.title,
-    "desc": state.videoData.desc,
-     }
+    aid: state.videoData.aid,
+    bvid: state.videoData.bvid,
+    cid: state.videoData.cid,
+    title: state.videoData.title,
+    desc: state.videoData.desc,
+  }
 }
 
 async function fetchSubtitleList(aid: number, cid: number) {
-  const burl = `https://api.bilibili.com/x/player/v2?aid=${aid}&cid=${cid}`
-  const resp = await fetch(burl, {
-    credentials: 'include',
-  })
-  const data = await resp.json()
-  console.log(data)
-  return data.data?.subtitle?.subtitles || []
+  const url = `https://api.bilibili.com/x/player/v2?aid=${aid}&cid=${cid}`
+  try {
+    const resp = await fetch(url, { credentials: 'include' })
+    if (!resp.ok) {
+      console.error(`[BiliAsk:MAIN] B站 subtitle list API error: HTTP ${resp.status} ${resp.statusText}`)
+      return []
+    }
+    const data = await resp.json()
+    console.log('[BiliAsk:MAIN] Subtitle list:', data)
+    const subtitles = data.data?.subtitle?.subtitles
+    if (!subtitles || subtitles.length === 0) {
+      console.error('[BiliAsk:MAIN] Subtitle list is empty — this video may have no subtitles, or subtitles are disabled')
+      return []
+    }
+    return subtitles
+  } catch (err: any) {
+    console.error('[BiliAsk:MAIN] fetchSubtitleList failed:', err.message || err)
+    return []
+  }
 }
 
 async function fetchSubtitleJSON(subtitleURL: string) {
   const fullURL = `https:${subtitleURL}`
-  const resp = await fetch(fullURL)
-  const data = await resp.json()
-  console.log(data)
-  return data
+  try {
+    const resp = await fetch(fullURL)
+    if (!resp.ok) {
+      console.error(`[BiliAsk:MAIN] B站 subtitle JSON API error: HTTP ${resp.status} ${resp.statusText} — url: ${fullURL}`)
+      return null
+    }
+    const data = await resp.json()
+    if (!data || !data.body || data.body.length === 0) {
+      console.error('[BiliAsk:MAIN] Subtitle JSON body is empty — url:', fullURL)
+      return null
+    }
+    console.log('[BiliAsk:MAIN] Subtitle body items:', data.body.length)
+    return data
+  } catch (err: any) {
+    console.error('[BiliAsk:MAIN] fetchSubtitleJSON failed:', err.message || err, '— url:', fullURL)
+    return null
+  }
 }
 
 interface subtitleInfo {
   content: string
-  from: number // 字幕出现时间
-  to: number //字幕消失时间
-  sid: number // 字幕id
-  location: number // 字幕显示的位置
-  music: number // 1=是歌词/音乐 0=普通字幕
+  from: number
+  to: number
+  sid: number
+  location: number
+  music: number
 }
 
 // 返回当前视频的播放时间
@@ -45,16 +71,16 @@ async function getCurVideoTime() {
   return document.querySelector('video')?.currentTime || 0
 }
 
+// 筛选当前时间范围的 2*n 条字幕
 async function filterSubtitle(subtitleList: subtitleInfo[], curTime: number, n: number = 10) {
-  if (curTime == 0) {
+  if (curTime === 0) {
     curTime = await getCurVideoTime()
-  } 
-  if (!subtitleList || subtitleList.length == 0) {
-    console.error("subtitleList is empty, check if subtitle is enabled")
+  }
+  if (!subtitleList || subtitleList.length === 0) {
+    console.error('[BiliAsk:MAIN] filterSubtitle: subtitleList is empty, nothing to filter')
     return []
   }
-  // 筛选在当前时间范围内的2*n条字幕, 在当前时间之前的n条字幕, 在当前时间之后的n条字幕
-  let candidates = []
+
   let center = 0
   for (const [index, info] of subtitleList.entries()) {
     if (info.from <= curTime && info.to >= curTime) {
@@ -62,33 +88,48 @@ async function filterSubtitle(subtitleList: subtitleInfo[], curTime: number, n: 
       break
     }
   }
-  candidates = subtitleList.slice(center - n, center + n + 1)
+  const start = Math.max(0, center - n)
+  const end = Math.min(subtitleList.length, center + n + 1)
+  const candidates = subtitleList.slice(start, end)
+  console.log(`[BiliAsk:MAIN] Filtered ${candidates.length} subtitles around ${curTime.toFixed(1)}s (indices ${start}-${end})`)
   return candidates
 }
 
 export async function pack() {
-  // 获取当前视频元数据
   const meta = getBilibiliVideoMeta()
   if (!meta) {
-    console.error('Failed to get video meta')
-    return
+    console.error('[BiliAsk:MAIN] pack() aborted: no video metadata available')
+    return null
   }
-  console.log(meta)
-  // 通过cid和aid获取视频字幕列表
+  console.log('[BiliAsk:MAIN] Video meta:', { aid: meta.aid, bvid: meta.bvid, cid: meta.cid, title: meta.title })
+
+  // 通过 cid 和 aid 获取视频字幕列表
   const subtitleList = await fetchSubtitleList(meta.aid, meta.cid)
-  // 遍历每个字幕, 并获取字幕内容
+  if (subtitleList.length === 0) {
+    console.error('[BiliAsk:MAIN] No subtitles available for this video (aid=%d, cid=%d)', meta.aid, meta.cid)
+  }
+
+  // 遍历每个字幕，获取字幕内容
   const stInfoArr: subtitleInfo[] = []
   for (const tt of subtitleList) {
-    const url = tt.subtitle_url
-    const data = await fetchSubtitleJSON(url)
-    stInfoArr.push(...data.body)
+    const data = await fetchSubtitleJSON(tt.subtitle_url)
+    if (data) {
+      stInfoArr.push(...data.body)
+    }
   }
-  // 筛选字幕 
+
+  if (stInfoArr.length === 0) {
+    console.error('[BiliAsk:MAIN] All subtitle fetches returned empty — total subtitles parsed: 0')
+  } else {
+    console.log('[BiliAsk:MAIN] Total subtitle entries parsed:', stInfoArr.length)
+  }
+
+  // 筛选字幕
   const final = await filterSubtitle(stInfoArr, await getCurVideoTime(), 10)
+
   return {
-    "subtitle": final,
-    "title": meta.title,
-    "desc": meta.desc,
+    subtitle: final,
+    title: meta.title,
+    desc: meta.desc,
   }
 }
-

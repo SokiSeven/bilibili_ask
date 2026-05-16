@@ -83,8 +83,23 @@ async function initExtension(): Promise<void> {
   const floatBtn = createFloatingButton()
   const chatPanel = new ChatPanel()
 
-  floatBtn.addEventListener('click', () => {
+  // Click: toggle panel, sync position first
+  floatBtn.el.addEventListener('click', () => {
+    chatPanel.syncToButton(floatBtn.getTop())
     chatPanel.toggle()
+  })
+
+  // Keep panel pinned to button while dragging
+  floatBtn.onDrag((top: number) => {
+    if (!chatPanel.visible) return
+    chatPanel.syncToButton(top)
+  })
+
+  // Re-sync on window resize
+  window.addEventListener('resize', () => {
+    if (chatPanel.visible) {
+      chatPanel.syncToButton(floatBtn.getTop())
+    }
   })
 
   chatPanel.setSendHandler(async (userMessage: string) => {
@@ -125,10 +140,7 @@ async function initExtension(): Promise<void> {
 
   chrome.runtime.onMessage.addListener((message) => {
     if (message.type === 'TOGGLE_UI') {
-      const btn = document.getElementById('bili-ask-float-btn')
-      if (btn) {
-        btn.style.display = message.visible ? '' : 'none'
-      }
+      floatBtn.el.style.display = message.visible ? '' : 'none'
       if (!message.visible) {
         chatPanel.hide()
       }
