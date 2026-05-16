@@ -1,4 +1,4 @@
-import type { VideoContext } from '../types'
+import { VideoContext } from '../types'
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)

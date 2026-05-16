@@ -517,6 +517,23 @@ export class ChatPanel {
     return this.messages
   }
 
+  /** Expose the raw panel element for DOM migration */
+  getContainer(): HTMLElement {
+    return this.container
+  }
+
+  /** Move the panel into a new parent (e.g. fullscreen element) */
+  moveToDOM(parent: HTMLElement): void {
+    parent.appendChild(this.container)
+  }
+
+  /** Move panel back to a target, typically document.body */
+  restoreToDOM(target: HTMLElement = document.body): void {
+    if (this.container.parentElement !== target) {
+      target.appendChild(this.container)
+    }
+  }
+
   private appendBubble(role: string, text: string): void {
     const el = document.createElement('div')
     el.className = `${PANEL_ID}__msg ${PANEL_ID}__msg--${role}`

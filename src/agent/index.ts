@@ -1,4 +1,4 @@
-import type { AppSettings, VideoContext, ChatMessage } from '../types'
+import { AppSettings, VideoContext, ChatMessage } from '../types'
 import { buildSystemPrompt } from './prompt'
 import { chatCompletion } from './providers'
 

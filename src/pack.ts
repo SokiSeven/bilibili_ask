@@ -23,12 +23,13 @@ async function fetchSubtitleList(aid: number, cid: number) {
       return []
     }
     const data = await resp.json()
-    console.log('[BiliAsk:MAIN] Subtitle list:', data)
     const subtitles = data.data?.subtitle?.subtitles
     if (!subtitles || subtitles.length === 0) {
-      console.error('[BiliAsk:MAIN] Subtitle list is empty — this video may have no subtitles, or subtitles are disabled')
+      console.error('[BiliAsk:MAIN] Subtitle list is empty — this video may have no subtitles')
       return []
     }
+    console.log('[BiliAsk:MAIN] Subtitle list count:', subtitles.length,
+      subtitles.map((s: any) => ({ lang: s.lan_doc, url: s.subtitle_url })))
     return subtitles
   } catch (err: any) {
     console.error('[BiliAsk:MAIN] fetchSubtitleList failed:', err.message || err)
@@ -37,11 +38,28 @@ async function fetchSubtitleList(aid: number, cid: number) {
 }
 
 async function fetchSubtitleJSON(subtitleURL: string) {
-  const fullURL = `https:${subtitleURL}`
+  // B站 subtitle_url 可能是协议相对路径 `//...` 或完整 URL `https://...`
+  let fullURL: string
+  if (subtitleURL.startsWith('http://') || subtitleURL.startsWith('https://')) {
+    fullURL = subtitleURL
+  } else if (subtitleURL.startsWith('//')) {
+    fullURL = `https:${subtitleURL}`
+  } else {
+    fullURL = subtitleURL
+  }
+
+  console.log('[BiliAsk:MAIN] Fetching subtitle JSON, raw url:', subtitleURL)
+
   try {
     const resp = await fetch(fullURL)
     if (!resp.ok) {
-      console.error(`[BiliAsk:MAIN] B站 subtitle JSON API error: HTTP ${resp.status} ${resp.statusText} — url: ${fullURL}`)
+      console.error(`[BiliAsk:MAIN] Subtitle JSON HTTP ${resp.status} — url: ${fullURL}`)
+      return null
+    }
+    const contentType = resp.headers.get('content-type') || ''
+    if (!contentType.includes('application/json') && !contentType.includes('text/plain')) {
+      const preview = await resp.text().then(t => t.slice(0, 100))
+      console.error(`[BiliAsk:MAIN] Subtitle JSON unexpected content-type: ${contentType}, body preview: ${preview}`)
       return null
     }
     const data = await resp.json()
@@ -52,7 +70,7 @@ async function fetchSubtitleJSON(subtitleURL: string) {
     console.log('[BiliAsk:MAIN] Subtitle body items:', data.body.length)
     return data
   } catch (err: any) {
-    console.error('[BiliAsk:MAIN] fetchSubtitleJSON failed:', err.message || err, '— url:', fullURL)
+    console.error('[BiliAsk:MAIN] fetchSubtitleJSON failed:', err.message || err)
     return null
   }
 }

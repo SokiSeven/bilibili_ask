@@ -1,5 +1,5 @@
 import { ChatPanel, createFloatingButton, injectStyles } from './chat-panel'
-import type { VideoContext, ChatRequest, ChatResponse } from './types'
+import { VideoContext, ChatRequest, ChatResponse } from './types'
 
 const VIDEO_PATH_RE = /^\/video\//
 
@@ -144,6 +144,72 @@ async function initExtension(): Promise<void> {
       if (!message.visible) {
         chatPanel.hide()
       }
+    }
+  })
+
+  // --- Fullscreen: migrate button + panel into fullscreenElement ---
+  let fsWrapper: HTMLElement | null = null
+  let fsVideoNextSibling: Node | null = null
+
+  document.addEventListener('fullscreenchange', () => {
+    const fsEl = document.fullscreenElement as HTMLElement | null
+
+    if (fsEl) {
+      // ---------- ENTER fullscreen ----------
+      console.log('[BiliAsk:CS] Entering fullscreen, target:', fsEl.tagName, fsEl.id || fsEl.className?.slice(0, 40))
+
+      let target: HTMLElement = fsEl
+
+      // If fullscreen is requested on <video> directly, wrap it
+      if (fsEl.tagName === 'VIDEO') {
+        fsVideoNextSibling = fsEl.nextSibling
+        const wrapper = document.createElement('div')
+        wrapper.id = 'bili-ask-fs-wrapper'
+        wrapper.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#000;position:relative;'
+        fsEl.parentNode!.insertBefore(wrapper, fsEl)
+        wrapper.appendChild(fsEl)
+        fsWrapper = wrapper
+        target = wrapper
+        console.log('[BiliAsk:CS] Wrapped <video> for fullscreen')
+      }
+
+      target.appendChild(floatBtn.el)
+      chatPanel.moveToDOM(target)
+
+      // Re-sync panel position after DOM move (layout may have shifted)
+      requestAnimationFrame(() => {
+        if (chatPanel.visible) chatPanel.syncToButton(floatBtn.getTop())
+      })
+    } else {
+      // ---------- EXIT fullscreen ----------
+      console.log('[BiliAsk:CS] Exiting fullscreen')
+
+      // Restore button & panel to body
+      if (floatBtn.el.parentElement !== document.body) {
+        document.body.appendChild(floatBtn.el)
+      }
+      chatPanel.restoreToDOM(document.body)
+
+      // Unwrap <video> if we wrapped it
+      if (fsWrapper) {
+        const video = fsWrapper.querySelector('video')
+        if (video) {
+          const parent = fsWrapper.parentNode!
+          if (fsVideoNextSibling && fsVideoNextSibling.parentNode === parent) {
+            parent.insertBefore(video, fsVideoNextSibling)
+          } else {
+            parent.appendChild(video)
+          }
+        }
+        fsWrapper.remove()
+        fsWrapper = null
+        fsVideoNextSibling = null
+        console.log('[BiliAsk:CS] Unwrapped <video> from fullscreen wrapper')
+      }
+
+      requestAnimationFrame(() => {
+        if (chatPanel.visible) chatPanel.syncToButton(floatBtn.getTop())
+      })
     }
   })
 
