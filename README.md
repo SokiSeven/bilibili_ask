@@ -1,160 +1,108 @@
-# Chrome Extension TypeScript Template
+# B站视频助手 - AI Q&A
 
-A modern CLI tool to generate Chrome extension projects with TypeScript, using Manifest V3.
+基于 B 站视频字幕内容的 AI 问答 Chrome 浏览器扩展，支持任意 OpenAI 兼容 API。
 
-## Quick Start
+## 功能
 
-Generate a new Chrome extension project using npx:
+- 自动提取 B 站视频字幕（通过 Bilibili API）
+- 根据当前播放进度，智能选取相关字幕片段作为上下文
+- 支持任意 OpenAI 兼容 API（OpenAI、DeepSeek、通义千问等）
+- 浮动聊天面板，Markdown 渲染，深色主题
+- 可配置模型、Temperature、上下文数量等参数
+- Chrome 同步存储，设置跨设备同步
 
-```bash
-npx create-chrome-ext-ts <project-name>
-```
+## 工作原理
 
-Example:
+1. 打开 B 站视频页面时，扩展通过 MAIN world 脚本读取 `window.__INITIAL_STATE__` 获取视频元数据
+2. 调用 Bilibili API 获取视频字幕列表及内容
+3. 根据当前播放时间，截取前后各 N 条字幕作为 AI 上下文
+4. 构建包含视频标题、简介、字幕的系统提示，发送至 OpenAI 兼容 API
+5. 流式展示 AI 回复（Markdown 渲染）
 
-```bash
-npx create-chrome-ext-ts my-awesome-extension
-```
-
-Check the version:
-
-```bash
-npx create-chrome-ext-ts -v
-# or
-npx create-chrome-ext-ts --version
-```
-
-This will:
-
-- Create a new directory with your project name in the current directory
-- Copy all template files
-- Update package.json and manifest.json with your project name
-- Install npm dependencies automatically
-
-## Features
-
-- ✅ TypeScript support
-- ✅ Webpack bundling
-- ✅ Manifest V3
-- ✅ Background service worker
-- ✅ Content script
-- ✅ Popup UI
-- ✅ Options page
-- ✅ Chrome Storage API integration
-- ✅ Message passing between components
-
-## Project Structure
+## 项目结构
 
 ```
-.
 ├── src/
-│   ├── background.ts      # Background service worker
-│   ├── content.ts         # Content script (runs on web pages)
-│   ├── popup.ts           # Popup script
-│   ├── popup.html         # Popup HTML
-│   ├── options.ts         # Options page script
-│   └── options.html       # Options page HTML
-├── icons/                 # Extension icons (create these)
-├── manifest.json          # Extension manifest
-├── webpack.config.js      # Webpack configuration
-├── tsconfig.json          # TypeScript configuration
-└── package.json           # Dependencies
-
+│   ├── background.ts          # Service Worker，处理 API 请求与消息代理
+│   ├── content.ts             # ISOLATED world 内容脚本
+│   ├── pack-bridge.ts         # MAIN world 脚本，读取 window.__INITIAL_STATE__
+│   ├── pack.ts                # 字幕提取与过滤逻辑
+│   ├── chat-panel.ts          # 聊天面板 UI（按钮、面板、样式注入）
+│   ├── popup.ts / popup.html   # 扩展弹窗
+│   ├── options.ts / options.html # 设置页面
+│   ├── types.ts               # 类型定义与默认设置
+│   ├── agent/
+│   │   ├── index.ts           # AI 问答入口，组装系统提示
+│   │   ├── prompt.ts          # 系统提示构建
+│   │   └── providers.ts       # OpenAI 兼容 API 请求
+│   └── utils/
+│       └── storage.ts         # chrome.storage 封装
+├── manifest.json              # Chrome 扩展清单 (Manifest V3)
+├── webpack.config.js
+├── tsconfig.json
+└── package.json
 ```
 
-## Using as a Template Repository
+## 快速开始
 
-If you've cloned this repository, you can also use the local generate script:
-
-```bash
-npm run generate <project-name>
-```
-
-## Setup
-
-1. **Install dependencies:**
+1. **安装依赖**
 
    ```bash
    npm install
    ```
 
-2. **Build the extension:**
+2. **构建**
 
    ```bash
    npm run build
    ```
 
-   For development with watch mode:
+3. **加载扩展**
 
-   ```bash
-   npm run dev
-   ```
+   - 打开 `chrome://extensions/`
+   - 启用「开发者模式」
+   - 点击「加载已解压的扩展程序」
+   - 选择 `dist/` 目录
 
-3. **Load the extension in Chrome:**
-   - Open Chrome and navigate to `chrome://extensions/`
-   - Enable "Developer mode" (toggle in top right)
-   - Click "Load unpacked"
-   - Select the `dist` folder
+4. **配置**
 
-## Development
+   - 点击扩展图标 → ⚙ 设置
+   - 填入 API 地址、Key、模型等参数
+   - 保存
 
-- **Build:** `npm run build` - Creates production build in `dist/`
-- **Dev:** `npm run dev` - Watches for changes and rebuilds automatically
-- **Clean:** `npm run clean` - Removes the `dist` folder
-- **Generate:** `npm run generate <name>` - Creates a new project from this template
+5. **使用**
 
-## Customization
+   - 打开任意 B 站视频页面（`https://*.bilibili.com/video/*`）
+   - 点击右下角粉色浮动按钮，打开聊天面板
+   - 输入问题，AI 将基于当前视频字幕进行回答
 
-### Adding New Scripts
+## 配置项
 
-1. Add entry point in `webpack.config.js`:
+| 配置 | 默认值 | 说明 |
+|------|--------|------|
+| Base URL | `https://api.openai.com` | API 地址 |
+| API Key | - | 你的 API 密钥 |
+| Model | `gpt-4o` | 模型名称 |
+| Temperature | 0.7 | 生成随机性 (0-2) |
+| Max Tokens | 2048 | 最大输出 token 数 |
+| 字幕上下文数量 | 20 | 播放时间前后各取 10 条字幕 |
+| System Prompt | 内置中文提示 | 自定义系统提示词 |
 
-   ```js
-   entry: {
-     // ... existing entries
-     newScript: "./src/newScript.ts";
-   }
-   ```
+## 支持的 API
 
-2. Create the TypeScript file in `src/`
+兼容 OpenAI Chat Completions 格式的任意 API：
 
-3. Reference it in `manifest.json` if needed
+- [OpenAI](https://platform.openai.com/) — `https://api.openai.com`
+- [DeepSeek](https://platform.deepseek.com/) — `https://api.deepseek.com`
+- [通义千问](https://dashscope.aliyun.com/) — `https://dashscope.aliyuncs.com/compatible-mode`
+- 其他兼容接口（Ollama、vLLM 等自部署服务）
 
-### Modifying Permissions
-
-Edit the `permissions` array in `manifest.json`. Common permissions:
-
-- `storage` - For chrome.storage API
-- `activeTab` - Access to active tab
-- `tabs` - Full tabs API access
-- `scripting` - For injecting scripts
-- `host_permissions` - For specific domains
-
-## Manifest V3 Notes
-
-- Background scripts are now service workers (no DOM access)
-- Use `chrome.storage` instead of `chrome.storage.local` for sync
-- Content Security Policy is stricter
-- Message passing is async (use promises or callbacks)
-
-## Resources
-
-- [Chrome Extension Documentation](https://developer.chrome.com/docs/extensions/)
-- [Manifest V3 Migration Guide](https://developer.chrome.com/docs/extensions/mv3/intro/)
-- [Chrome Extension APIs](https://developer.chrome.com/docs/extensions/reference/)
-
-## Publishing
-
-To publish this package to npm:
-
-1. Update the version in `package.json`
-2. Login to npm: `npm login`
-3. Publish: `npm publish`
-
-After publishing, users can generate projects with:
+## 开发
 
 ```bash
-npx create-chrome-ext-ts <project-name>
+npm run dev     # 开发模式，文件变更自动构建
+npm run build   # 生产构建
+npm run clean   # 清理 dist/
 ```
 
 ## License

@@ -1,236 +1,292 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>B站视频助手 - 设置</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>设置 · B站视频助手</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-      background: #1a1a2e;
-      color: #e0e0e0;
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 32px 20px;
-      min-height: 100vh;
-    }
+  body {
+    font-family: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
+    background: #f5f5f7;
+    color: #333;
+    max-width: 580px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+    min-height: 100vh;
+    letter-spacing: .01em;
+  }
 
-    h1 {
-      font-size: 22px;
-      color: #fb7299;
-      margin-bottom: 4px;
-    }
-    .subtitle {
-      font-size: 13px;
-      color: #777;
-      margin-bottom: 28px;
-    }
+  /* header */
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .page-header__icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #fb7299 0%, #ff8fb3 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .page-header__icon svg {
+    width: 18px;
+    height: 18px;
+    fill: #fff;
+  }
+  .page-header h1 {
+    font-size: 20px;
+    font-weight: 620;
+    color: #1a1a1a;
+  }
+  .page-subtitle {
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 28px;
+    margin-left: 50px;
+  }
 
-    .section {
-      background: #232338;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-    .section__title {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      color: #ccc;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+  /* section card */
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.03), 0 0 0 1px rgba(0,0,0,.03);
+  }
+  .card__title {
+    font-size: 13px;
+    font-weight: 650;
+    color: #1a1a1a;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .card__title::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    border-radius: 2px;
+    background: #fb7299;
+  }
 
-    .form-group {
-      margin-bottom: 16px;
-    }
-    .form-group:last-child { margin-bottom: 0; }
-    .form-group label {
-      display: block;
-      font-size: 13px;
-      color: #aaa;
-      margin-bottom: 6px;
-      font-weight: 500;
-    }
-    .form-group input,
-    .form-group textarea,
-    .form-group select {
-      width: 100%;
-      padding: 10px 12px;
-      background: #1a1a2e;
-      border: 1px solid #3a3a4c;
-      border-radius: 8px;
-      font-size: 13px;
-      font-family: inherit;
-      color: #e0e0e0;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .form-group input:focus,
-    .form-group textarea:focus,
-    .form-group select:focus {
-      border-color: #fb7299;
-    }
-    .form-group input[type="range"] {
-      padding: 0;
-      height: 6px;
-      accent-color: #fb7299;
-    }
-    .form-group textarea {
-      resize: vertical;
-      min-height: 120px;
-      font-size: 12px;
-      line-height: 1.5;
-    }
-    .form-group select {
-      cursor: pointer;
-    }
-    .form-group .hint {
-      font-size: 11px;
-      color: #666;
-      margin-top: 4px;
-    }
-    .form-group .range-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .form-group .range-row input[type="range"] { flex: 1; }
-    .form-group .range-row .range-val {
-      width: 48px;
-      text-align: right;
-      font-size: 13px;
-      font-weight: 600;
-      color: #fb7299;
-      font-variant-numeric: tabular-nums;
-      font-family: 'Fira Code', 'Consolas', monospace;
-    }
+  /* form */
+  .field {
+    margin-bottom: 16px;
+  }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 550;
+    color: #555;
+    margin-bottom: 6px;
+  }
+  .field input,
+  .field textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: #f5f5f7;
+    border: 1.5px solid transparent;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: #333;
+    outline: none;
+    transition: background .2s, border-color .2s;
+    letter-spacing: .01em;
+  }
+  .field input:focus,
+  .field textarea:focus {
+    background: #fff;
+    border-color: rgba(251,114,153,.25);
+  }
+  .field input[type="range"] {
+    padding: 0;
+    height: 4px;
+    accent-color: #fb7299;
+    background: transparent;
+  }
+  .field textarea {
+    resize: vertical;
+    min-height: 110px;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .field .hint {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 5px;
+    line-height: 1.4;
+  }
 
-    .actions {
-      display: flex;
-      gap: 10px;
-    }
-    .btn {
-      padding: 10px 24px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.15s;
-    }
-    .btn--primary {
-      background: #fb7299;
-      color: #fff;
-      flex: 1;
-    }
-    .btn--primary:hover { background: #ff5c85; }
-    .btn--secondary {
-      background: #2a2a3c;
-      color: #ccc;
-    }
-    .btn--secondary:hover { background: #33334a; }
+  /* range row */
+  .range-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .range-row input[type="range"] { flex: 1; }
+  .range-row .range-val {
+    width: 42px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 650;
+    color: #fb7299;
+    font-variant-numeric: tabular-nums;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  }
 
-    .toast {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 24px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      z-index: 1000;
-      opacity: 0;
-      transition: opacity 0.3s;
-      pointer-events: none;
-    }
-    .toast--show { opacity: 1; }
-    .toast--success { background: #2e7d32; color: #fff; }
-    .toast--error { background: #c62828; color: #fff; }
+  /* badge */
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 5px;
+    letter-spacing: .03em;
+  }
+  .badge--req { background: rgba(251,114,153,.1); color: #fb7299; }
 
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-    .badge--required { background: rgba(251,114,153,0.2); color: #fb7299; }
-    .badge--optional { background: rgba(255,255,255,0.06); color: #777; }
-  </style>
+  /* actions */
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .btn {
+    padding: 11px 24px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: all .15s;
+    letter-spacing: .02em;
+  }
+  .btn--primary {
+    background: #fb7299;
+    color: #fff;
+    flex: 1;
+    box-shadow: 0 2px 8px rgba(251,114,153,.2);
+  }
+  .btn--primary:hover { background: #ff5c85; }
+  .btn--ghost {
+    background: transparent;
+    color: #888;
+    border: 1.5px solid rgba(0,0,0,.06);
+    padding: 11px 20px;
+  }
+  .btn--ghost:hover { background: rgba(0,0,0,.02); color: #555; }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 22px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 550;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s;
+    letter-spacing: .01em;
+  }
+  .toast--show { opacity: 1; }
+  .toast--ok  { background: #f6ffed; color: #52c41a; border: 1px solid rgba(82,196,26,.15); }
+  .toast--err { background: #fff2f0; color: #e74c3c; border: 1px solid rgba(231,76,60,.1); }
+</style>
 </head>
 <body>
-  <h1>B站视频助手</h1>
-  <p class="subtitle">配置 AI API 连接参数，开启视频问答体验</p>
 
-  <div class="section">
-    <div class="section__title">🔑 API 连接</div>
+<div class="page-header">
+  <div class="page-header__icon">
+    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+  </div>
+  <h1>设置</h1>
+</div>
+<p class="page-subtitle">配置 API 连接，开始视频问答</p>
 
-    <div class="form-group">
-      <label>Base URL <span class="badge badge--required">必填</span></label>
-      <input type="text" id="baseURL" placeholder="https://api.openai.com" autocomplete="off">
-      <p class="hint">API 服务地址（仅域名），会自动拼接 /v1/chat/completions。例如 https://api.openai.com 或 https://api.deepseek.com</p>
-    </div>
+<!-- API config -->
+<div class="card">
+  <div class="card__title">API 连接</div>
 
-    <div class="form-group">
-      <label>API Key <span class="badge badge--required">必填</span></label>
-      <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
-      <p class="hint">你的 API 密钥，仅存储在本地浏览器中</p>
-    </div>
-
-    <div class="form-group">
-      <label>Model</label>
-      <input type="text" id="model" placeholder="gpt-4o" autocomplete="off">
-      <p class="hint">模型名称，例如 gpt-4o / deepseek-chat / qwen-turbo</p>
-    </div>
+  <div class="field">
+    <label>Base URL <span class="badge badge--req">必填</span></label>
+    <input type="text" id="baseURL" placeholder="https://api.openai.com" autocomplete="off">
+    <p class="hint">仅需填写域名，自动拼接 /v1/chat/completions。支持 OpenAI、DeepSeek、通义千问等</p>
   </div>
 
-  <div class="section">
-    <div class="section__title">⚙️ 高级参数</div>
-
-    <div class="form-group">
-      <label>Temperature</label>
-      <div class="range-row">
-        <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7">
-        <span class="range-val" id="temperatureVal">0.7</span>
-      </div>
-      <p class="hint">控制回答的随机性，0 = 确定，2 = 最大随机</p>
-    </div>
-
-    <div class="form-group">
-      <label>Max Tokens</label>
-      <input type="number" id="maxTokens" min="256" max="32768" step="256" placeholder="2048">
-      <p class="hint">单次回答最大 token 数（256 ~ 32768）</p>
-    </div>
-
-    <div class="form-group">
-      <label>字幕上下文数量</label>
-      <input type="number" id="subtitleContextCount" min="4" max="100" step="2" placeholder="20">
-      <p class="hint">每次提问携带的上下文字幕条数，越多效果越好但 token 消耗越高</p>
-    </div>
+  <div class="field">
+    <label>API Key <span class="badge badge--req">必填</span></label>
+    <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
+    <p class="hint">密钥仅保存在浏览器本地，不会上传到任何第三方</p>
   </div>
 
-  <div class="section">
-    <div class="section__title">💬 System Prompt</div>
+  <div class="field">
+    <label>Model</label>
+    <input type="text" id="model" placeholder="gpt-4o" autocomplete="off">
+    <p class="hint">模型名，例如 gpt-4o / deepseek-chat / qwen-turbo</p>
+  </div>
+</div>
 
-    <div class="form-group">
-      <label>自定义系统提示词</label>
-      <textarea id="systemPrompt" placeholder="输入系统提示词..."></textarea>
-      <p class="hint">定义 AI 助手的行为风格和回答规则，使用 {{title}} {{desc}} {{subtitle}} 等变量</p>
+<!-- Advanced -->
+<div class="card">
+  <div class="card__title">高级参数</div>
+
+  <div class="field">
+    <label>Temperature</label>
+    <div class="range-row">
+      <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7">
+      <span class="range-val" id="temperatureVal">0.7</span>
     </div>
+    <p class="hint">回答创造性，0 = 精确确定，2 = 最大随机</p>
   </div>
 
-  <div class="actions">
-    <button class="btn btn--primary" id="saveBtn">保存设置</button>
-    <button class="btn btn--secondary" id="resetBtn">恢复默认</button>
+  <div class="field">
+    <label>Max Tokens</label>
+    <input type="number" id="maxTokens" min="256" max="32768" step="256" placeholder="2048">
+    <p class="hint">单次回答最大长度，256 ~ 32768</p>
   </div>
 
-  <div id="toast" class="toast"></div>
+  <div class="field">
+    <label>字幕上下文条数</label>
+    <input type="number" id="subtitleContextCount" min="4" max="100" step="2" placeholder="20">
+    <p class="hint">每次携带的附近字幕数量，越大越准确但 token 消耗更高</p>
+  </div>
+</div>
 
-  <script src="options.js"></script>
+<!-- System prompt -->
+<div class="card">
+  <div class="card__title">系统提示词</div>
+
+  <div class="field">
+    <label>自定义 System Prompt</label>
+    <textarea id="systemPrompt" placeholder="你是一个B站视频助手..."></textarea>
+    <p class="hint">定义 AI 的行为与风格。视频标题、简介、字幕会自动注入到上下文中</p>
+  </div>
+</div>
+
+<div class="actions">
+  <button class="btn btn--primary" id="saveBtn">保存设置</button>
+  <button class="btn btn--ghost" id="resetBtn">恢复默认</button>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="options.js"></script>
 </body>
 </html>

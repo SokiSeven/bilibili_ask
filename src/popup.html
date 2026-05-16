@@ -1,183 +1,258 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>B站视频助手</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B站视频助手</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      width: 320px;
-      padding: 20px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-      background: #1e1e2e;
-      color: #e0e0e0;
-    }
+  body {
+    width: 300px;
+    padding: 0;
+    font-family: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
+    background: #fafafa;
+    color: #333;
+    letter-spacing: .01em;
+  }
 
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-    .logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #fb7299, #ff6b9d);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-    }
-    .header h1 {
-      font-size: 16px;
-      color: #fb7299;
-    }
-    .header .ver {
-      font-size: 11px;
-      color: #666;
-      margin-left: auto;
-    }
+  /* --- top bar --- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px 14px;
+    gap: 10px;
+  }
+  .topbar__icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #fb7299 0%, #ff8fb3 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .topbar__icon svg {
+    width: 16px;
+    height: 16px;
+    fill: #fff;
+  }
+  .topbar__title {
+    font-size: 15px;
+    font-weight: 620;
+    color: #1a1a1a;
+  }
+  .topbar__ver {
+    margin-left: auto;
+    font-size: 10px;
+    color: #bbb;
+    font-weight: 500;
+    background: rgba(0,0,0,.03);
+    padding: 2px 7px;
+    border-radius: 5px;
+  }
 
-    .card {
-      background: #2a2a3c;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-    .card__row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .card__label {
-      font-size: 13px;
-      color: #aaa;
-    }
-    .card__value {
-      font-size: 13px;
-      font-weight: 600;
-    }
-    .card__value--ok { color: #4caf50; }
-    .card__value--warn { color: #ff9800; }
-    .card__value--error { color: #f44336; }
+  /* --- status row --- */
+  .status-row {
+    display: flex;
+    gap: 8px;
+    padding: 0 20px 10px;
+  }
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .status-pill__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .status-pill__dot--on  { background: #52c41a; }
+  .status-pill__dot--off { background: #e0e0e0; }
+  .status-pill__dot--warn{ background: #faad14; }
 
-    .toggle-wrap {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .toggle-wrap span {
-      font-size: 14px;
-    }
+  /* --- main card --- */
+  .main-card {
+    margin: 0 14px 12px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.03), 0 0 0 1px rgba(0,0,0,.03);
+  }
+  .main-card__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+  }
+  .main-card__row + .main-card__row {
+    border-top: 1px solid rgba(0,0,0,.04);
+  }
+  .main-card__label {
+    font-size: 12.5px;
+    color: #999;
+  }
+  .main-card__val {
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .main-card__val--ok   { color: #52c41a; }
+  .main-card__val--warn { color: #faad14; }
+  .main-card__val--err  { color: #e74c3c; }
 
-    /* Toggle switch */
-    .toggle {
-      position: relative;
-      width: 46px;
-      height: 26px;
-      flex-shrink: 0;
-    }
-    .toggle input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .toggle .slider {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #555;
-      border-radius: 26px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .toggle .slider::before {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      left: 3px;
-      bottom: 3px;
-      background: #fff;
-      border-radius: 50%;
-      transition: transform 0.2s;
-    }
-    .toggle input:checked + .slider {
-      background: #fb7299;
-    }
-    .toggle input:checked + .slider::before {
-      transform: translateX(20px);
-    }
+  /* --- toggle card --- */
+  .toggle-card {
+    margin: 0 14px 12px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 4px rgba(0,0,0,.03), 0 0 0 1px rgba(0,0,0,.03);
+  }
+  .toggle-card__label {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .toggle-card__hint {
+    font-size: 11px;
+    color: #bbb;
+    font-weight: 400;
+    display: block;
+  }
 
-    .btn-row {
-      display: flex;
-      gap: 8px;
-    }
-    .btn {
-      flex: 1;
-      padding: 10px 0;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      text-align: center;
-      transition: all 0.15s;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .btn--primary {
-      background: #fb7299;
-      color: #fff;
-    }
-    .btn--primary:hover { background: #ff5c85; }
-    .btn--secondary {
-      background: #33334a;
-      color: #ccc;
-    }
-    .btn--secondary:hover { background: #3a3a54; }
+  /* toggle switch */
+  .toggle {
+    position: relative;
+    width: 44px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle .slider {
+    position: absolute;
+    inset: 0;
+    background: #e0e0e0;
+    border-radius: 26px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .toggle .slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  }
+  .toggle input:checked + .slider { background: #fb7299; }
+  .toggle input:checked + .slider::before { transform: translateX(18px); }
 
-    .divider {
-      height: 1px;
-      background: #33334a;
-      margin: 14px 0;
-    }
-  </style>
+  /* --- actions --- */
+  .actions {
+    display: flex;
+    gap: 8px;
+    padding: 4px 14px 16px;
+  }
+  .btn {
+    flex: 1;
+    padding: 10px 0;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: center;
+    transition: all .15s;
+    text-decoration: none;
+    letter-spacing: .02em;
+  }
+  .btn--primary {
+    background: #fb7299;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(251,114,153,.2);
+  }
+  .btn--primary:hover { background: #ff5c85; }
+  .btn--ghost {
+    background: transparent;
+    color: #888;
+    border: 1.5px solid rgba(0,0,0,.06);
+  }
+  .btn--ghost:hover {
+    background: rgba(0,0,0,.02);
+    color: #555;
+  }
+
+  /* --- footer --- */
+  .footer {
+    text-align: center;
+    padding: 0 14px 14px;
+    font-size: 10px;
+    color: #ccc;
+  }
+</style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo">🤖</div>
-    <h1>B站视频助手</h1>
-    <span class="ver">v1.0</span>
+  <div class="topbar">
+    <div class="topbar__icon">
+      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    </div>
+    <span class="topbar__title">B站视频助手</span>
+    <span class="topbar__ver">v1.0</span>
   </div>
 
-  <div class="card">
-    <div class="toggle-wrap">
-      <span>悬浮按钮</span>
-      <label class="toggle">
-        <input type="checkbox" id="floatToggle" checked>
-        <span class="slider"></span>
-      </label>
+  <div class="status-row">
+    <span class="status-pill">
+      <span class="status-pill__dot" id="apiDot"></span>
+      <span id="apiStatus">检查中</span>
+    </span>
+    <span class="status-pill">
+      <span class="status-pill__dot" id="pageDot"></span>
+      <span id="pageStatus">--</span>
+    </span>
+  </div>
+
+  <div class="toggle-card">
+    <div>
+      <span class="toggle-card__label">显示悬浮按钮</span>
+      <span class="toggle-card__hint">视频页右下角快捷入口</span>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="floatToggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="main-card">
+    <div class="main-card__row">
+      <span class="main-card__label">API 连接</span>
+      <span class="main-card__val" id="apiModel">--</span>
+    </div>
+    <div class="main-card__row">
+      <span class="main-card__label">当前页面</span>
+      <span class="main-card__val" id="pageUrl">--</span>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card__row" style="margin-bottom:10px;">
-      <span class="card__label">API 状态</span>
-      <span class="card__value" id="apiStatus">检查中...</span>
-    </div>
-    <div class="card__row">
-      <span class="card__label">当前页面</span>
-      <span class="card__value" id="pageStatus">--</span>
-    </div>
+  <div class="actions">
+    <a class="btn btn--ghost" id="optionsLink" href="#">设置</a>
+    <button class="btn btn--primary" id="openChatBtn">打开对话</button>
   </div>
 
-  <div class="btn-row">
-    <a class="btn btn--secondary" id="optionsLink" href="#">⚙️ 设置</a>
-    <button class="btn btn--primary" id="openChatBtn">💬 打开对话</button>
-  </div>
+  <div class="footer">基于视频字幕 · AI 驱动</div>
 
   <script src="popup.js"></script>
 </body>
