@@ -347,6 +347,8 @@ export class ChatPanel {
   private messages: ChatMessage[] = []
   private isLoading = false
   private onSend: ((msg: string) => void) | null = null
+  private streamingEl: HTMLElement | null = null
+  private streamingText = ''
 
   constructor() {
     this.container = this.buildPanel()
@@ -372,7 +374,6 @@ export class ChatPanel {
         </div>
         <div class="${PANEL_ID}__meta">
           <div class="${PANEL_ID}__title">视频助手</div>
-          <div class="${PANEL_ID}__subtitle">基于字幕 · AI 问答</div>
         </div>
         <button class="${PANEL_ID}__btn" data-action="clear" title="清空">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
@@ -505,6 +506,37 @@ export class ChatPanel {
     this.sendBtn.disabled = false
     const loader = this.messageList.querySelector('[data-loading="true"]')
     if (loader) loader.remove()
+  }
+
+  startStreamingBubble(): void {
+    this.isLoading = true
+    this.sendBtn.disabled = true
+    this.streamingText = ''
+    const loader = this.messageList.querySelector('[data-loading="true"]')
+    if (loader) loader.remove()
+    const el = document.createElement('div')
+    el.className = `${PANEL_ID}__msg ${PANEL_ID}__msg--assistant`
+    this.messageList.appendChild(el)
+    this.streamingEl = el
+    this.scrollBottom()
+  }
+
+  appendStreamingText(text: string): void {
+    if (!this.streamingEl) return
+    this.streamingText += text
+    this.streamingEl.textContent = this.streamingText
+    this.scrollBottom()
+  }
+
+  finishStreamingBubble(): void {
+    if (!this.streamingEl) return
+    this.streamingEl.innerHTML = this.streamingText ? renderMarkdown(this.streamingText) : ''
+    this.messages.push({ role: 'assistant', content: this.streamingText })
+    this.streamingEl = null
+    this.streamingText = ''
+    this.isLoading = false
+    this.sendBtn.disabled = false
+    this.scrollBottom()
   }
 
   clearMessages(): void {

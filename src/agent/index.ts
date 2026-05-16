@@ -1,6 +1,6 @@
 import { AppSettings, VideoContext, ChatMessage } from '../types'
 import { buildSystemPrompt } from './prompt'
-import { chatCompletion } from './providers'
+import { chatCompletion, chatCompletionStream } from './providers'
 
 export async function askAI(
   settings: AppSettings,
@@ -13,4 +13,17 @@ export async function askAI(
     ...messages,
   ]
   return chatCompletion(settings, allMessages)
+}
+
+export async function* askAIStream(
+  settings: AppSettings,
+  videoContext: VideoContext,
+  messages: ChatMessage[]
+): AsyncGenerator<string> {
+  const systemPrompt = buildSystemPrompt(settings, videoContext)
+  const allMessages = [
+    { role: 'system', content: systemPrompt },
+    ...messages,
+  ]
+  yield* chatCompletionStream(settings, allMessages)
 }

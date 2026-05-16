@@ -1,5 +1,5 @@
-import { AppSettings, DEFAULT_SETTINGS, ChatRequest, ChatResponse } from './types'
-import { askAI } from './agent'
+import { AppSettings, DEFAULT_SETTINGS, ChatRequest, ChatResponse, PortMessage } from './types'
+import { askAI, askAIStream } from './agent'
 
 console.log('[BiliAsk:BG] Service worker starting')
 
@@ -29,6 +29,52 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
   }
   return false
+})
+
+// --- Streaming via port ---
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== 'chat-stream') return
+
+  port.onMessage.addListener(async (message: PortMessage) => {
+    if (message.type !== 'CHAT_STREAM_REQUEST') return
+
+    try {
+      const stored = await chrome.storage.sync.get(['settings'])
+      const settings: AppSettings = stored.settings || DEFAULT_SETTINGS
+
+      console.log('[BiliAsk:BG] Stream request received, hasApiKey:', !!settings.apiKey)
+
+      if (!settings.apiKey) {
+        port.postMessage({ type: 'CHAT_STREAM_ERROR', error: '请先在插件设置中配置 API Key' })
+        return
+      }
+
+      console.log('[BiliAsk:BG] Streaming AI with model:', settings.model)
+      let fullContent = ''
+
+      for await (const chunk of askAIStream(settings, message.videoContext, message.messages)) {
+        fullContent += chunk
+        port.postMessage({ type: 'CHAT_STREAM_CHUNK', content: chunk })
+      }
+
+      port.postMessage({ type: 'CHAT_STREAM_DONE' })
+      console.log('[BiliAsk:BG] Stream complete, length:', fullContent.length)
+
+      // Save to local history
+      const hist = await chrome.storage.local.get(['chatHistory'])
+      const history = hist.chatHistory || []
+      const lastMsg = message.messages[message.messages.length - 1]
+      history.push(
+        { role: 'user', content: lastMsg.content, time: Date.now() },
+        { role: 'assistant', content: fullContent, time: Date.now() }
+      )
+      const trimmed = history.slice(-200)
+      await chrome.storage.local.set({ chatHistory: trimmed })
+    } catch (err: any) {
+      console.error('[BiliAsk:BG] Stream failed:', err.message)
+      port.postMessage({ type: 'CHAT_STREAM_ERROR', error: err.message || 'Unknown error' })
+    }
+  })
 })
 
 async function handleChatRequest(req: ChatRequest): Promise<ChatResponse> {

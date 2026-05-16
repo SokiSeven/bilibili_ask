@@ -70,3 +70,27 @@ export interface StateQuery {
 }
 
 export type RuntimeMessage = ChatRequest | ToggleRequest | StateQuery
+
+// --- Port-based streaming messages (content script ⇄ background) ---
+
+export interface ChatStreamRequest {
+  type: 'CHAT_STREAM_REQUEST'
+  messages: ChatMessage[]
+  videoContext: VideoContext
+}
+
+export interface ChatStreamChunk {
+  type: 'CHAT_STREAM_CHUNK'
+  content: string
+}
+
+export interface ChatStreamDone {
+  type: 'CHAT_STREAM_DONE'
+}
+
+export interface ChatStreamError {
+  type: 'CHAT_STREAM_ERROR'
+  error: string
+}
+
+export type PortMessage = ChatStreamRequest | ChatStreamChunk | ChatStreamDone | ChatStreamError

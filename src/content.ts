@@ -1,5 +1,5 @@
 import { ChatPanel, createFloatingButton, injectStyles } from './chat-panel'
-import { VideoContext, ChatRequest, ChatResponse } from './types'
+import { VideoContext, ChatRequest, ChatResponse, ChatStreamRequest, PortMessage } from './types'
 
 const VIDEO_PATH_RE = /^\/video\//
 
@@ -107,24 +107,52 @@ async function initExtension(): Promise<void> {
 
     try {
       const videoContext = await requestVideoData()
+      let streaming = false
 
-      const chatRequest: ChatRequest = {
-        type: 'CHAT_REQUEST',
+      const port = chrome.runtime.connect({ name: 'chat-stream' })
+
+      port.onMessage.addListener((msg: PortMessage) => {
+        if (msg.type === 'CHAT_STREAM_CHUNK') {
+          if (!streaming) {
+            chatPanel.hideLoading()
+            chatPanel.startStreamingBubble()
+            streaming = true
+          }
+          chatPanel.appendStreamingText(msg.content)
+        } else if (msg.type === 'CHAT_STREAM_DONE') {
+          if (!streaming) {
+            chatPanel.hideLoading()
+            chatPanel.startStreamingBubble()
+            streaming = true
+          }
+          chatPanel.finishStreamingBubble()
+          streaming = false
+          port.disconnect()
+        } else if (msg.type === 'CHAT_STREAM_ERROR') {
+          chatPanel.hideLoading()
+          if (streaming) {
+            chatPanel.finishStreamingBubble()
+            streaming = false
+          }
+          chatPanel.addErrorMessage(`错误: ${msg.error}`)
+          port.disconnect()
+        }
+      })
+
+      port.onDisconnect.addListener(() => {
+        if (streaming) {
+          chatPanel.finishStreamingBubble()
+          streaming = false
+        }
+      })
+
+      const streamRequest: ChatStreamRequest = {
+        type: 'CHAT_STREAM_REQUEST',
         messages: chatPanel.getMessages(),
         videoContext,
       }
 
-      const response = await sendChatRequest(chatRequest)
-
-      chatPanel.hideLoading()
-
-      if (response.error) {
-        chatPanel.addErrorMessage(`错误: ${response.error}`)
-      } else if (response.content) {
-        chatPanel.addAssistantMessage(response.content)
-      } else {
-        chatPanel.addErrorMessage('AI 返回了空内容，请检查 API 配置')
-      }
+      port.postMessage(streamRequest)
     } catch (err: any) {
       chatPanel.hideLoading()
       const msg = err.message || 'Unknown error'
