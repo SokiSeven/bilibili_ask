@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "B站视频助手 - AI Q&A",
+  "version": "1.0.0",
+  "description": "基于B站视频字幕内容的AI问答助手，支持OpenAI兼容API",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://*.bilibili.com/*",
+    "https://api.openai.com/*",
+    "https://api.deepseek.com/*",
+    "https://dashscope.aliyuncs.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "B站视频助手"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.bilibili.com/video/*"],
+      "js": ["pack-bridge.js"],
+      "world": "MAIN",
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://*.bilibili.com/video/*"],
+      "js": ["content.js"],
+      "world": "ISOLATED",
+      "run_at": "document_end"
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
+}
